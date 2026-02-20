@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NameScript — Your Name, Every Language</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,700;1,300;1,700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080810;
+    --surface: #10101c;
+    --border: #22223a;
+    --accent: #d4a94a;
+    --accent2: #8b6dfa;
+    --text: #ede9e0;
+    --muted: #5a5875;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 44px 20px 100px;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(139,109,250,0.08) 0%, transparent 70%);
+    pointer-events:none; z-index:0;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    position: relative; z-index:1;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(20px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    font-weight: 300;
+    letter-spacing: -1px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .logo em { font-style: italic; color: var(--accent); }
+
+  .tagline {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-top: 12px;
+  }
+
+  .input-section {
+    width: 100%;
+    max-width: 580px;
+    position: relative; z-index:1;
+    margin-bottom: 14px;
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+
+  .input-wrap {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    background: var(--surface);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .input-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(212,169,74,0.1);
+  }
+
+  input[type="text"] {
+    flex:1;
+    background: transparent;
+    border: none; outline: none;
+    color: var(--text);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.55rem;
+    font-weight: 300;
+    padding: 18px 22px;
+    letter-spacing: 1px;
+  }
+  input::placeholder { color: var(--muted); font-style: italic; }
+
+  .btn-convert {
+    background: var(--accent);
+    color: #080810;
+    border: none;
+    padding: 18px 28px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn-convert:hover { background: #e8c46a; }
+  .btn-convert:active { transform: scale(0.97); }
+
+  .style-picker {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 580px;
+    width: 100%;
+    margin-bottom: 40px;
+    position: relative; z-index:1;
+    animation: fadeUp 0.7s 0.15s ease both;
+  }
+
+  .style-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .style-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .style-btn.active { background: var(--accent); color: #080810; border-color: var(--accent); }
+
+  .poster-wrap {
+    position: relative; z-index:1;
+    margin-bottom: 24px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeUp 0.5s ease both;
+  }
+  .poster-wrap.show { display: flex; }
+
+  #nameCanvas {
+    border-radius: 4px;
+    max-width: min(900px, 100%);
+    height: auto;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  .poster-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-dl {
+    background: var(--accent2);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-dl:hover { background: #a08fff; }
+  .btn-dl:active { transform: scale(0.97); }
+
+  .btn-regen {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 12px 22px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+  .btn-regen:hover { border-color: var(--muted); color: var(--text); }
+
+  .loading-bar {
+    width: 100%; max-width: 580px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 40px;
+    display: none;
+    position: relative; z-index:1;
+  }
+  .loading-bar.active { display: block; }
+  .loading-bar::after {
+    content:'';
+    position: absolute;
+    left: -40%; width: 40%; height: 100%;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: slide 0.9s infinite;
+  }
+  @keyframes slide { to { left:140%; } }
+
+  .results-grid {
+    width: 100%; max-width: 960px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    position: relative; z-index:1;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 20px 22px;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.35s, transform 0.35s, border-color 0.2s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .card.visible { opacity:1; transform:translateY(0); }
+  .card:hover { border-color: var(--accent2); }
+  .card::after { content:'copy'; position:absolute; top:10px; right:14px; font-size:0.58rem; letter-spacing:2px; text-transform:uppercase; color:var(--muted); opacity:0; transition:opacity 0.2s; }
+  .card:hover::after { opacity:1; }
+  .card.copied::after { content:'copied!'; color:var(--accent); opacity:1; }
+
+  .lang-label { font-size:0.62rem; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .translated-name { font-family:'Cormorant Garamond',serif; font-size:1.7rem; font-weight:700; color:var(--text); line-height:1.2; word-break:break-word; }
+  .romanized { font-size:0.7rem; color:var(--muted); margin-top:5px; font-style:italic; }
+  .script-tag { display:inline-block; font-size:0.58rem; letter-spacing:2px; text-transform:uppercase; border:1px solid var(--border); padding:2px 7px; border-radius:2px; margin-top:10px; color:var(--muted); }
+
+  .empty-state { text-align:center; color:var(--muted); font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; padding:60px 0; grid-column:1/-1; }
+  .note { font-size:0.62rem; color:var(--muted); text-align:center; margin-top:44px; letter-spacing:1px; position:relative; z-index:1; max-width:500px; line-height:1.7; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Name<em>Script</em></div>
+  <div class="tagline">Your name · Every language · Beautiful art</div>
+</header>
+
+<div class="input-section">
+  <div class="input-wrap">
+    <input type="text" id="nameInput" placeholder="Enter your name…" maxlength="30" autocomplete="off"/>
+    <button class="btn-convert" id="convertBtn">Convert</button>
+  </div>
+</div>
+
+<div class="style-picker">
+  <button class="style-btn active" data-style="cosmos">✦ Cosmos</button>
+  <button class="style-btn" data-style="gold">◈ Gold Foil</button>
+  <button class="style-btn" data-style="aurora">◉ Aurora</button>
+  <button class="style-btn" data-style="ink">▣ Ink Stone</button>
+  <button class="style-btn" data-style="bloom">✿ Bloom</button>
+</div>
+
+<div class="loading-bar" id="loadingBar"></div>
+
+<div class="poster-wrap" id="posterWrap">
+  <canvas id="nameCanvas" width="900" height="520"></canvas>
+  <div class="poster-actions">
+    <button class="btn-dl" id="dlBtn">⬇ Download Poster</button>
+    <button class="btn-regen" id="regenBtn">↻ Next Style</button>
+  </div>
+</div>
+
+<div class="results-grid" id="resultsGrid">
+  <div class="empty-state" id="emptyState">Enter a name to see it in 24 languages and generate a poster</div>
+</div>
+
+<p class="note">Translations are phonetic/cultural equivalents. Click any card to copy. Download your poster to share anywhere.</p>
+
+<script>
+const languages = [
+  {lang:"Japanese",script:"Katakana",flag:"🇯🇵"},
+  {lang:"Chinese (Mandarin)",script:"Hanzi",flag:"🇨🇳"},
+  {lang:"Arabic",script:"Arabic",flag:"🇸🇦"},
+  {lang:"Hindi",script:"Devanagari",flag:"🇮🇳"},
+  {lang:"Korean",script:"Hangul",flag:"🇰🇷"},
+  {lang:"Russian",script:"Cyrillic",flag:"🇷🇺"},
+  {lang:"Greek",script:"Greek",flag:"🇬🇷"},
+  {lang:"Hebrew",script:"Hebrew",flag:"🇮🇱"},
+  {lang:"Thai",script:"Thai",flag:"🇹🇭"},
+  {lang:"Bengali",script:"Bengali",flag:"🇧🇩"},
+  {lang:"Tamil",script:"Tamil",flag:"🇮🇳"},
+  {lang:"Telugu",script:"Telugu",flag:"🇮🇳"},
+  {lang:"Amharic",script:"Ethiopic",flag:"🇪🇹"},
+  {lang:"Georgian",script:"Mkhedruli",flag:"🇬🇪"},
+  {lang:"Armenian",script:"Armenian",flag:"🇦🇲"},
+  {lang:"Gujarati",script:"Gujarati",flag:"🇮🇳"},
+  {lang:"Punjabi",script:"Gurmukhi",flag:"🇮🇳"},
+  {lang:"Khmer",script:"Khmer",flag:"🇰🇭"},
+  {lang:"Mongolian",script:"Cyrillic",flag:"🇲🇳"},
+  {lang:"Sinhala",script:"Sinhala",flag:"🇱🇰"},
+  {lang:"Burmese",script:"Myanmar",flag:"🇲🇲"},
+  {lang:"Tibetan",script:"Tibetan",flag:"🏔️"},
+  {lang:"Ukrainian",script:"Cyrillic",flag:"🇺🇦"},
+  {lang:"Serbian",script:"Cyrillic",flag:"🇷🇸"},
+];
+
+const knownNames = {
+  "alex":    {"Japanese":{t:"アレックス",r:"Arekkusu"},"Chinese (Mandarin)":{t:"亚历克斯",r:"Yàlìkèsī"},"Arabic":{t:"أليكس",r:"Aliks"},"Hindi":{t:"एलेक्स",r:"Eleks"},"Korean":{t:"알렉스",r:"Allekseu"},"Russian":{t:"Алекс",r:"Aleks"},"Greek":{t:"Αλέξ",r:"Aléx"},"Hebrew":{t:"אלכס",r:"Alex"},"Thai":{t:"อเล็กซ์",r:"Alek"},"Bengali":{t:"অ্যালেক্স",r:"Ayaleksa"}},
+  "john":    {"Japanese":{t:"ジョン",r:"Jon"},"Chinese (Mandarin)":{t:"约翰",r:"Yuēhàn"},"Arabic":{t:"يوحنا",r:"Yūḥannā"},"Hindi":{t:"जॉन",r:"Jon"},"Korean":{t:"존",r:"Jon"},"Russian":{t:"Иван",r:"Ivan"},"Greek":{t:"Ιωάννης",r:"Iōánnēs"},"Hebrew":{t:"יוחנן",r:"Yochanan"},"Thai":{t:"จอห์น",r:"Jawn"},"Bengali":{t:"জন",r:"Jana"}},
+  "sarah":   {"Japanese":{t:"サラ",r:"Sara"},"Chinese (Mandarin)":{t:"莎拉",r:"Shālā"},"Arabic":{t:"سارة",r:"Sāra"},"Hindi":{t:"सारा",r:"Sārā"},"Korean":{t:"사라",r:"Sara"},"Russian":{t:"Сара",r:"Sara"},"Greek":{t:"Σάρα",r:"Sára"},"Hebrew":{t:"שָׂרָה",r:"Śārāh"},"Thai":{t:"ซาร่า",r:"Sārā"},"Bengali":{t:"সারা",r:"Sārā"}},
+  "maria":   {"Japanese":{t:"マリア",r:"Maria"},"Chinese (Mandarin)":{t:"玛丽亚",r:"Mǎlìyà"},"Arabic":{t:"مريم",r:"Maryam"},"Hindi":{t:"मारिया",r:"Māriā"},"Korean":{t:"마리아",r:"Maria"},"Russian":{t:"Мария",r:"Mariya"},"Greek":{t:"Μαρία",r:"María"},"Hebrew":{t:"מִרְיָם",r:"Miryam"},"Thai":{t:"มาเรีย",r:"Mārīa"},"Bengali":{t:"মারিয়া",r:"Māriyā"}},
+  "david":   {"Japanese":{t:"ダビデ",r:"Dabide"},"Chinese (Mandarin)":{t:"大卫",r:"Dàwèi"},"Arabic":{t:"داود",r:"Dāwūd"},"Hindi":{t:"दाऊद",r:"Dāūd"},"Korean":{t:"다윗",r:"Dawit"},"Russian":{t:"Давид",r:"David"},"Greek":{t:"Δαβίδ",r:"Davíd"},"Hebrew":{t:"דָּוִד",r:"Dāwīd"},"Thai":{t:"ดาวิด",r:"Dāwid"},"Bengali":{t:"দাউদ",r:"Dāuda"}},
+  "michael": {"Japanese":{t:"マイケル",r:"Maikeru"},"Chinese (Mandarin)":{t:"迈克尔",r:"Màikè'ěr"},"Arabic":{t:"ميخائيل",r:"Mīkhāʾīl"},"Hindi":{t:"माइकल",r:"Māikal"},"Korean":{t:"마이클",r:"Maikeul"},"Russian":{t:"Михаил",r:"Mikhail"},"Greek":{t:"Μιχαήλ",r:"Michaíl"},"Hebrew":{t:"מִיכָאֵל",r:"Mîkhāʾēl"},"Thai":{t:"ไมเคิล",r:"Māikheīl"},"Bengali":{t:"মাইকেল",r:"Māikela"}},
+  "emma":    {"Japanese":{t:"エマ",r:"Ema"},"Chinese (Mandarin)":{t:"艾玛",r:"Àimǎ"},"Arabic":{t:"إيما",r:"Īmā"},"Hindi":{t:"एम्मा",r:"Emmā"},"Korean":{t:"에마",r:"Ema"},"Russian":{t:"Эмма",r:"Emma"},"Greek":{t:"Έμμα",r:"Émma"},"Hebrew":{t:"אמה",r:"Ama"},"Thai":{t:"เอ็มมา",r:"Emma"},"Bengali":{t:"এমা",r:"Emā"}},
+  "sofia":   {"Japanese":{t:"ソフィア",r:"Sofia"},"Chinese (Mandarin)":{t:"索菲亚",r:"Suǒfēiyà"},"Arabic":{t:"صوفيا",r:"Ṣūfiyā"},"Hindi":{t:"सोफिया",r:"Sophiyā"},"Korean":{t:"소피아",r:"Sophia"},"Russian":{t:"София",r:"Sofiya"},"Greek":{t:"Σοφία",r:"Sophía"},"Hebrew":{t:"סופיה",r:"Sofia"},"Thai":{t:"โซเฟีย",r:"Sōfīa"},"Bengali":{t:"সোফিয়া",r:"Sōphiyā"}},
+  "lucas":   {"Japanese":{t:"ルーカス",r:"Rūkasu"},"Chinese (Mandarin)":{t:"卢卡斯",r:"Lúkǎsī"},"Arabic":{t:"لوقا",r:"Lūqā"},"Hindi":{t:"लुकास",r:"Lukās"},"Korean":{t:"루카스",r:"Rukaseu"},"Russian":{t:"Лукас",r:"Lukas"},"Greek":{t:"Λουκάς",r:"Loukás"},"Hebrew":{t:"לוּקָס",r:"Lūqās"},"Thai":{t:"ลูกัส",r:"Lūkas"},"Bengali":{t:"লুকাস",r:"Lukāsa"}},
+  "olivia":  {"Japanese":{t:"オリビア",r:"Oribia"},"Chinese (Mandarin)":{t:"奥利维亚",r:"Àolìwéiyà"},"Arabic":{t:"أوليفيا",r:"Awlīfiyā"},"Hindi":{t:"ओलिविया",r:"Oliviyā"},"Korean":{t:"올리비아",r:"Ollibia"},"Russian":{t:"Оливия",r:"Oliviya"},"Greek":{t:"Ολίβια",r:"Olívia"},"Hebrew":{t:"אוליביה",r:"Olivia"},"Thai":{t:"โอลิเวีย",r:"Ōliwīa"},"Bengali":{t:"অলিভিয়া",r:"Alibhiyā"}},
+};
+
+function phoneticTranslit(name, lang) {
+  const n = name.toLowerCase().trim();
+  const maps = {
+    "Russian":{a:"а",b:"б",c:"с",d:"д",e:"е",f:"ф",g:"г",h:"х",i:"и",j:"дж",k:"к",l:"л",m:"м",n:"н",o:"о",p:"п",q:"к",r:"р",s:"с",t:"т",u:"у",v:"в",w:"в",x:"кс",y:"й",z:"з"},
+    "Greek":{a:"α",b:"β",c:"κ",d:"δ",e:"ε",f:"φ",g:"γ",h:"χ",i:"ι",j:"τζ",k:"κ",l:"λ",m:"μ",n:"ν",o:"ο",p:"π",q:"κ",r:"ρ",s:"σ",t:"τ",u:"υ",v:"β",w:"ου",x:"ξ",y:"υ",z:"ζ"},
+    "Hindi":{a:"अ",b:"ब",c:"क",d:"द",e:"ए",f:"फ",g:"ग",h:"ह",i:"इ",j:"ज",k:"क",l:"ल",m:"म",n:"न",o:"ओ",p:"प",q:"क",r:"र",s:"स",t:"त",u:"उ",v:"व",w:"व",x:"क्स",y:"य",z:"ज़"},
+    "Korean":{a:"아",b:"브",c:"크",d:"드",e:"에",f:"프",g:"그",h:"흐",i:"이",j:"주",k:"크",l:"르",m:"므",n:"느",o:"오",p:"프",q:"크",r:"르",s:"스",t:"트",u:"우",v:"브",w:"우",x:"크스",y:"이",z:"즈"},
+    "Arabic":{a:"ا",b:"ب",c:"ك",d:"د",e:"ي",f:"ف",g:"ج",h:"ه",i:"ي",j:"ج",k:"ك",l:"ل",m:"م",n:"ن",o:"و",p:"ب",q:"ك",r:"ر",s:"س",t:"ت",u:"و",v:"ف",w:"و",x:"كس",y:"ي",z:"ز"},
+    "Bengali":{a:"আ",b:"ব",c:"ক",d:"দ",e:"এ",f:"ফ",g:"গ",h:"হ",i:"ই",j:"জ",k:"ক",l:"ল",m:"ম",n:"ন",o:"ও",p:"প",q:"ক",r:"র",s:"স",t:"ত",u:"উ",v:"ভ",w:"ও",x:"ক্স",y:"য়",z:"জ"},
+    "Tamil":{a:"அ",b:"ப",c:"க",d:"த",e:"எ",f:"ப",g:"க",h:"ஹ",i:"இ",j:"ஜ",k:"க",l:"ல",m:"ம",n:"ந",o:"ஓ",p:"ப",q:"க",r:"ர",s:"ஸ",t:"த",u:"உ",v:"வ",w:"வ",x:"க்ஸ",y:"ய",z:"ஜ"},
+    "Telugu":{a:"అ",b:"బ",c:"క",d:"డ",e:"ఎ",f:"ఫ",g:"గ",h:"హ",i:"ఇ",j:"జ",k:"క",l:"ల",m:"మ",n:"న",o:"ఓ",p:"పి",q:"క",r:"ర",s:"స",t:"త",u:"ఉ",v:"వ",w:"వ",x:"క్స",y:"య",z:"జ"},
+    "Gujarati":{a:"આ",b:"બ",c:"ક",d:"દ",e:"એ",f:"ફ",g:"ગ",h:"હ",i:"ઇ",j:"જ",k:"ક",l:"લ",m:"મ",n:"ન",o:"ઓ",p:"પ",q:"ક",r:"ર",s:"સ",t:"ત",u:"ઉ",v:"વ",w:"વ",x:"ક્સ",y:"ય",z:"ઝ"},
+    "Punjabi":{a:"ਆ",b:"ਬ",c:"ਕ",d:"ਦ",e:"ਏ",f:"ਫ",g:"ਗ",h:"ਹ",i:"ਇ",j:"ਜ",k:"ਕ",l:"ਲ",m:"ਮ",n:"ਨ",o:"ਓ",p:"ਪ",q:"ਕ",r:"ਰ",s:"ਸ",t:"ਤ",u:"ਉ",v:"ਵ",w:"ਵ",x:"ਕਸ",y:"ਯ",z:"ਜ਼"},
+    "Ukrainian":{a:"а",b:"б",c:"с",d:"д",e:"е",f:"ф",g:"г",h:"г",i:"і",j:"дж",k:"к",l:"л",m:"м",n:"н",o:"о",p:"п",q:"к",r:"р",s:"с",t:"т",u:"у",v:"в",w:"в",x:"кс",y:"й",z:"з"},
+    "Serbian":{a:"а",b:"б",c:"ц",d:"д",e:"е",f:"ф",g:"г",h:"х",i:"и",j:"ј",k:"к",l:"л",m:"м",n:"н",o:"о",p:"п",q:"к",r:"р",s:"с",t:"т",u:"у",v:"в",w:"в",x:"кс",y:"ј",z:"з"},
+    "Mongolian":{a:"а",b:"б",c:"ц",d:"д",e:"э",f:"ф",g:"г",h:"х",i:"и",j:"ж",k:"к",l:"л",m:"м",n:"н",o:"о",p:"п",q:"к",r:"р",s:"с",t:"т",u:"у",v:"в",w:"в",x:"кс",y:"й",z:"з"},
+    "Amharic":{a:"አ",b:"ብ",c:"ክ",d:"ድ",e:"ኤ",f:"ፍ",g:"ግ",h:"ህ",i:"ኢ",j:"ጅ",k:"ክ",l:"ል",m:"ም",n:"ን",o:"ኦ",p:"ፕ",q:"ቅ",r:"ር",s:"ስ",t:"ት",u:"ኡ",v:"ቭ",w:"ው",x:"ክስ",y:"ይ",z:"ዝ"},
+    "Georgian":{a:"ა",b:"ბ",c:"ც",d:"დ",e:"ე",f:"ფ",g:"გ",h:"ჰ",i:"ი",j:"ჯ",k:"კ",l:"ლ",m:"მ",n:"ნ",o:"ო",p:"პ",q:"ქ",r:"რ",s:"ს",t:"ტ",u:"უ",v:"ვ",w:"ვ",x:"ხ",y:"ყ",z:"ზ"},
+    "Armenian":{a:"Ա",b:"Բ",c:"Ց",d:"Դ",e:"Է",f:"Ֆ",g:"Գ",h:"Հ",i:"Ի",j:"Ջ",k:"Կ",l:"Լ",m:"Մ",n:"Ն",o:"Օ",p:"Պ",q:"Կ",r:"Ռ",s:"Ս",t:"Տ",u:"Ու",v:"Վ",w:"Վ",x:"Կս",y:"Յ",z:"Զ"},
+    "Hebrew":{a:"א",b:"ב",c:"כ",d:"ד",e:"ה",f:"פ",g:"ג",h:"ה",i:"י",j:"ג",k:"כ",l:"ל",m:"מ",n:"נ",o:"ו",p:"פ",q:"ק",r:"ר",s:"ס",t:"ת",u:"ו",v:"ו",w:"ו",x:"קס",y:"י",z:"ז"},
+    "Thai":{a:"อา",b:"บ",c:"ค",d:"ด",e:"เอ",f:"ฟ",g:"ก",h:"ฮ",i:"อิ",j:"จ",k:"ค",l:"ล",m:"ม",n:"น",o:"โอ",p:"พ",q:"ค",r:"ร",s:"ส",t:"ต",u:"อุ",v:"ว",w:"ว",x:"คส",y:"ย",z:"ซ"},
+    "Khmer":{a:"អា",b:"ប",c:"ក",d:"ដ",e:"អែ",f:"ហ្វ",g:"ហ្គ",h:"ហ",i:"អី",j:"ច",k:"ក",l:"ល",m:"ម",n:"ន",o:"អូ",p:"ព",q:"ក",r:"រ",s:"ស",t:"ត",u:"អូ",v:"វ",w:"វ",x:"ក្ស",y:"យ",z:"ហ្ស"},
+    "Sinhala":{a:"ආ",b:"බ",c:"ක",d:"ද",e:"එ",f:"ෆ",g:"ග",h:"හ",i:"ඉ",j:"ජ",k:"ක",l:"ල",m:"ම",n:"න",o:"ඔ",p:"ප",q:"ක",r:"ර",s:"ස",t:"ත",u:"උ",v:"ව",w:"ව",x:"ක්ස",y:"ය",z:"ස"},
+    "Burmese":{a:"အာ",b:"ဘ",c:"က",d:"ဒ",e:"အေ",f:"ဖ",g:"ဂ",h:"ဟ",i:"အိ",j:"ဂျ",k:"က",l:"လ",m:"မ",n:"န",o:"အို",p:"ပ",q:"က",r:"ရ",s:"စ",t:"တ",u:"အု",v:"ဗ",w:"ဝ",x:"ကဆ",y:"ယ",z:"ဇ"},
+    "Tibetan":{a:"ཨ",b:"བ",c:"ཀ",d:"ད",e:"ཨེ",f:"ཕ",g:"ག",h:"ཧ",i:"ཨི",j:"ཇ",k:"ཀ",l:"ལ",m:"མ",n:"ན",o:"ཨོ",p:"པ",q:"ཀ",r:"ར",s:"ས",t:"ཏ",u:"ཨུ",v:"བ",w:"ཝ",x:"ཀཤ",y:"ཡ",z:"ཟ"},
+  };
+  if (maps[lang]) return n.split('').map(c=>maps[lang][c]||c).join('');
+  if (lang==="Japanese") {
+    const kMap={a:"ア",i:"イ",u:"ウ",e:"エ",o:"オ",ka:"カ",ki:"キ",ku:"ク",ke:"ケ",ko:"コ",sa:"サ",si:"シ",su:"ス",se:"セ",so:"ソ",ta:"タ",ti:"チ",tu:"ツ",te:"テ",to:"ト",na:"ナ",ni:"ニ",nu:"ヌ",ne:"ネ",no:"ノ",ha:"ハ",hi:"ヒ",hu:"フ",he:"ヘ",ho:"ホ",ma:"マ",mi:"ミ",mu:"ム",me:"メ",mo:"モ",ya:"ヤ",yu:"ユ",yo:"ヨ",ra:"ラ",ri:"リ",ru:"ル",re:"レ",ro:"ロ",wa:"ワ",n:"ン",b:"ブ",c:"ク",d:"ド",f:"フ",g:"グ",h:"フ",j:"ジ",k:"ク",l:"ル",m:"ム",p:"プ",q:"ク",r:"ル",s:"ス",t:"ト",v:"ブ",w:"ウ",x:"クス",y:"ユ",z:"ズ"};
+    let res=''; let i=0;
+    while(i<n.length){const p=n[i]+(n[i+1]||'');if(kMap[p]){res+=kMap[p];i+=2;}else if(kMap[n[i]]){res+=kMap[n[i]];i++;}else{res+=n[i];i++;}}
+    return res;
+  }
+  if (lang==="Chinese (Mandarin)") return name;
+  return n;
+}
+
+function getTranslation(name, langObj) {
+  const key = name.toLowerCase().trim();
+  if (knownNames[key]?.[langObj.lang]) {
+    const d = knownNames[key][langObj.lang];
+    return { translated: d.t, romanized: d.r };
+  }
+  return { translated: phoneticTranslit(name, langObj.lang), romanized: name.charAt(0).toUpperCase()+name.slice(1).toLowerCase()+" (phonetic)" };
+}
+
+/* =========================================================
+   POSTER STYLES
+========================================================= */
+const posterStyles = {
+  cosmos: {
+    draw(ctx, W, H) {
+      const g = ctx.createLinearGradient(0,0,W,H);
+      g.addColorStop(0,'#05050f'); g.addColorStop(0.5,'#0a0520'); g.addColorStop(1,'#050515');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='rgba(255,255,255,0.85)';
+      for(let i=0;i<200;i++){
+        const x=Math.random()*W,y=Math.random()*H,r=Math.random()*1.3;
+        ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+      }
+      const nb=ctx.createRadialGradient(W*.5,H*.5,10,W*.5,H*.5,W*.55);
+      nb.addColorStop(0,'rgba(120,80,200,0.3)');nb.addColorStop(1,'transparent');
+      ctx.fillStyle=nb;ctx.fillRect(0,0,W,H);
+    },
+    nameColor:'#e0d0ff', glow:'rgba(160,100,255,0.7)', sub:'rgba(180,150,230,0.75)',
+    accent:'#b06eff', border:'rgba(160,100,255,0.35)'
+  },
+  gold: {
+    draw(ctx, W, H) {
+      ctx.fillStyle='#0c0800';ctx.fillRect(0,0,W,H);
+      ctx.strokeStyle='rgba(180,130,30,0.1)';ctx.lineWidth=1;
+      for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+      for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+      const v=ctx.createRadialGradient(W/2,H/2,H*.15,W/2,H/2,H*.85);
+      v.addColorStop(0,'rgba(30,20,0,0)');v.addColorStop(1,'rgba(0,0,0,0.8)');
+      ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+    },
+    nameColor:'#f5d87a', glow:'rgba(210,170,40,0.75)', sub:'rgba(200,160,70,0.75)',
+    accent:'#d4a94a', border:'rgba(200,160,40,0.4)'
+  },
+  aurora: {
+    draw(ctx, W, H) {
+      ctx.fillStyle='#030a10';ctx.fillRect(0,0,W,H);
+      [['rgba(0,200,120,0.15)',0.1],['rgba(0,160,220,0.18)',0.25],['rgba(120,0,200,0.12)',0.4],['rgba(0,220,180,0.12)',0.55]].forEach(([c,t])=>{
+        const g=ctx.createLinearGradient(0,H*t,W,H*(t+0.25));
+        g.addColorStop(0,'transparent');g.addColorStop(0.5,c);g.addColorStop(1,'transparent');
+        ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+      });
+      ctx.fillStyle='rgba(255,255,255,0.6)';
+      for(let i=0;i<100;i++){const x=Math.random()*W,y=Math.random()*H*.45,r=Math.random()*.9;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+    },
+    nameColor:'#90ffe0', glow:'rgba(0,220,150,0.6)', sub:'rgba(80,220,190,0.75)',
+    accent:'#00e8a8', border:'rgba(0,200,150,0.35)'
+  },
+  ink: {
+    draw(ctx, W, H) {
+      ctx.fillStyle='#f4efe4';ctx.fillRect(0,0,W,H);
+      for(let i=0;i<4000;i++){
+        ctx.fillStyle=`rgba(80,60,40,${Math.random()*0.025})`;
+        ctx.fillRect(Math.random()*W,Math.random()*H,1,1);
+      }
+      const v=ctx.createRadialGradient(W/2,H/2,H*.2,W/2,H/2,H*.85);
+      v.addColorStop(0,'rgba(200,185,160,0)');v.addColorStop(1,'rgba(150,130,100,0.2)');
+      ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+    },
+    nameColor:'#1a0c04', glow:'rgba(50,25,5,0.4)', sub:'rgba(70,45,25,0.8)',
+    accent:'#8b3a0a', border:'rgba(50,35,15,0.25)'
+  },
+  bloom: {
+    draw(ctx, W, H) {
+      const g=ctx.createLinearGradient(0,0,W,H);
+      g.addColorStop(0,'#180420');g.addColorStop(0.5,'#220830');g.addColorStop(1,'#140318');
+      ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+      [{x:W*.2,y:H*.3,c:'rgba(255,90,150,0.18)'},{x:W*.8,y:H*.2,c:'rgba(200,70,210,0.14)'},{x:W*.5,y:H*.75,c:'rgba(255,140,90,0.12)'},{x:W*.75,y:H*.8,c:'rgba(140,90,255,0.14)'}].forEach(p=>{
+        const r=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,W*.45);
+        r.addColorStop(0,p.c);r.addColorStop(1,'transparent');
+        ctx.fillStyle=r;ctx.fillRect(0,0,W,H);
+      });
+    },
+    nameColor:'#ffc8e4', glow:'rgba(255,110,180,0.6)', sub:'rgba(220,150,200,0.75)',
+    accent:'#ff70b8', border:'rgba(255,90,160,0.35)'
+  }
+};
+
+let currentStyle='cosmos', currentName='', lastTranslations=[];
+
+function drawCornerOrnament(ctx, cx, cy, sx, sy, color) {
+  ctx.save();
+  ctx.strokeStyle=color; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+sx*22,cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,cy+sy*22); ctx.stroke();
+  ctx.restore();
+}
+
+function drawPoster(name, translations) {
+  const canvas = document.getElementById('nameCanvas');
+  const ctx = canvas.getContext('2d');
+  const W=900, H=520;
+  canvas.width=W; canvas.height=H;
+
+  const st = posterStyles[currentStyle];
+
+  // Draw BG
+  st.draw(ctx, W, H);
+
+  // Outer frames
+  ctx.strokeStyle=st.border; ctx.lineWidth=1;
+  ctx.strokeRect(22,22,W-44,H-44);
+  ctx.strokeRect(28,28,W-56,H-56);
+
+  // Corner ornaments
+  drawCornerOrnament(ctx,32,32,1,1,st.accent);
+  drawCornerOrnament(ctx,W-32,32,-1,1,st.accent);
+  drawCornerOrnament(ctx,32,H-32,1,-1,st.accent);
+  drawCornerOrnament(ctx,W-32,H-32,-1,-1,st.accent);
+
+  // Main name
+  const displayName = name.charAt(0).toUpperCase()+name.slice(1).toLowerCase();
+  const fontSize = Math.min(128, Math.max(56, Math.floor(820/displayName.length)));
+  ctx.save();
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor=st.glow; ctx.shadowBlur=50;
+  ctx.font=`300 ${fontSize}px 'Cormorant Garamond', Georgia, serif`;
+  ctx.fillStyle=st.nameColor;
+  ctx.fillText(displayName, W/2, H*0.37);
+  ctx.shadowBlur=24;
+  ctx.fillText(displayName, W/2, H*0.37);
+  ctx.restore();
+
+  // Decorative divider
+  ctx.save();
+  const lg=ctx.createLinearGradient(W*.15,0,W*.85,0);
+  lg.addColorStop(0,'transparent'); lg.addColorStop(0.5,st.accent); lg.addColorStop(1,'transparent');
+  ctx.strokeStyle=lg; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(W*.15,H*.585); ctx.lineTo(W*.85,H*.585); ctx.stroke();
+  // Diamond
+  ctx.fillStyle=st.accent;
+  ctx.translate(W/2, H*.585); ctx.rotate(Math.PI/4);
+  ctx.fillRect(-3.5,-3.5,7,7);
+  ctx.restore();
+
+  // Translation samples — 2 rows of 4
+  const picks = translations.slice(0,8);
+  const marginX=60, rowH=55;
+  const colW=(W-marginX*2)/4;
+
+  picks.forEach((item,i)=>{
+    const col=i%4, row=Math.floor(i/4);
+    const cx=marginX+col*colW+colW/2;
+    const cy=H*0.67+row*rowH;
+
+    ctx.save();
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor=st.glow; ctx.shadowBlur=8;
+    ctx.font=`400 21px 'Cormorant Garamond', Georgia, serif`;
+    ctx.fillStyle=st.sub;
+    ctx.fillText(item.translated, cx, cy);
+    ctx.restore();
+
+    ctx.save();
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.font=`300 8px 'DM Mono', monospace`;
+    ctx.fillStyle=st.border.replace('0.35','0.6').replace('0.4','0.6');
+    ctx.letterSpacing='2px';
+    ctx.fillText(item.lang.toUpperCase(), cx, cy+14);
+    ctx.restore();
+  });
+
+  // Watermark
+  ctx.save();
+  ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.font=`300 9px 'DM Mono', monospace`;
+  ctx.fillStyle=st.border.replace('0.35','0.45').replace('0.4','0.45');
+  ctx.fillText('NAMESCRIPT', W/2, H-34);
+  ctx.restore();
+}
+
+/* =========================================================
+   UI
+========================================================= */
+document.querySelectorAll('.style-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.style-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentStyle=btn.dataset.style;
+    if(currentName&&lastTranslations.length) drawPoster(currentName,lastTranslations);
+  });
+});
+
+function convertName() {
+  const name = document.getElementById('nameInput').value.trim();
+  if(!name) return;
+  currentName=name;
+  const grid=document.getElementById('resultsGrid');
+  const loader=document.getElementById('loadingBar');
+  const posterWrap=document.getElementById('posterWrap');
+  grid.innerHTML='';
+  posterWrap.classList.remove('show');
+  loader.classList.add('active');
+
+  setTimeout(()=>{
+    loader.classList.remove('active');
+    lastTranslations=languages.map(l=>{
+      const {translated,romanized}=getTranslation(name,l);
+      return {...l,translated,romanized};
+    });
+    drawPoster(name,lastTranslations);
+    posterWrap.classList.add('show');
+
+    lastTranslations.forEach((item,i)=>{
+      const card=document.createElement('div');
+      card.className='card';
+      card.innerHTML=`<div class="lang-label">${item.flag} ${item.lang}</div><div class="translated-name">${item.translated}</div><div class="romanized">${item.romanized}</div><div class="script-tag">${item.script}</div>`;
+      card.addEventListener('click',()=>{
+        navigator.clipboard.writeText(item.translated).catch(()=>{});
+        card.classList.add('copied');
+        setTimeout(()=>card.classList.remove('copied'),1500);
+      });
+      grid.appendChild(card);
+      setTimeout(()=>card.classList.add('visible'),40+i*25);
+    });
+  },700);
+}
+
+document.getElementById('convertBtn').addEventListener('click',convertName);
+document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')convertName();});
+
+document.getElementById('dlBtn').addEventListener('click',()=>{
+  const canvas=document.getElementById('nameCanvas');
+  const link=document.createElement('a');
+  link.download=`${currentName||'name'}-namescript.png`;
+  link.href=canvas.toDataURL('image/png');
+  link.click();
+});
+
+document.getElementById('regenBtn').addEventListener('click',()=>{
+  const keys=Object.keys(posterStyles);
+  const next=keys[(keys.indexOf(currentStyle)+1)%keys.length];
+  document.querySelectorAll('.style-btn').forEach(b=>b.classList.toggle('active',b.dataset.style===next));
+  currentStyle=next;
+  if(currentName&&lastTranslations.length) drawPoster(currentName,lastTranslations);
+});
+</script>
+</body>
+</html>
